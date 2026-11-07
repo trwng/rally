@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Capacitor } from "@capacitor/core";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +13,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
 import { TermsContent, PrivacyContent } from "./LegalContent";
+
+// The Google sign-in redirect can't return to the packaged app, so the app uses email only.
+const IS_NATIVE = Capacitor.isNativePlatform();
 
 export function AuthPage() {
   const [mode, setMode] = useState<"login" | "signup">("signup");
@@ -35,7 +39,7 @@ export function AuthPage() {
           email,
           password,
           options: {
-            emailRedirectTo: window.location.origin,
+            emailRedirectTo: IS_NATIVE ? "https://letsrallys.app" : window.location.origin,
             data: { full_name: name.trim() },
           },
         });
@@ -87,6 +91,8 @@ export function AuthPage() {
             : "Sign in to your Rally account."}
         </p>
 
+        {!IS_NATIVE && (
+          <>
         <button
           onClick={signInWithGoogle}
           className="mt-8 h-11 w-full rounded-md border border-border bg-card hover:bg-accent flex items-center justify-center gap-2.5 text-[14px] font-semibold transition-colors tap-scale"
@@ -102,6 +108,8 @@ export function AuthPage() {
           </span>
           <div className="flex-1 h-px bg-border" />
         </div>
+          </>
+        )}
 
         <form onSubmit={submit} className="space-y-3">
           {mode === "signup" && (

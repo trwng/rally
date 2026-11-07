@@ -1,60 +1,46 @@
 # Rally as an iPhone / Android app
 
-The app is a Capacitor shell that loads Rally from its live web address, so the
-web app keeps working as it does today (including the Supabase backend and the
-`/api/geocode` server route). Updating the website updates the app too.
+The app packages a copy of Rally's screens inside it (so it looks exactly like the
+website) and talks to the same Supabase database. Only address search calls the
+live site (`https://letsrallys.app/api/geocode`). The normal website build is
+untouched.
 
-App ID: `com.trwng.rally` (change it in `capacitor.config.ts` before you add the
-platforms if you want a different one; it can't be changed later once the app
+App ID: `com.trwng.rally` (set in `capacitor.config.ts`; can't change once the app
 is in the store).
 
-## One-time setup (on your Mac)
+## Before you start
 
-1. Install Node.js and Xcode (from the Mac App Store). For Android also install
-   Android Studio.
-2. Clone the repo and install:
-   ```sh
-   git clone https://github.com/trwng/rally
-   cd rally
-   bun install        # or: npm install
-   ```
-3. The live web address is already set to `https://letsrallys.app` in
-   `capacitor.config.ts` (it must be `https://`).
-4. Add the platforms:
-   ```sh
-   npx cap add ios
-   npx cap add android
-   ```
+- `src/components/rally/KudosSheet.tsx` is missing from this repo (it's imported by
+  `PastGameFeed.tsx`), so the build fails. Copy that file from Lovable into the repo.
+- Copy `.env.example` to `.env` and fill in `VITE_SUPABASE_PUBLISHABLE_KEY` (the same
+  public key the website uses).
 
-## Build and run on iPhone
+## Build and run on iPhone (Mac with Xcode)
 
 ```sh
-npx cap sync ios
+npm install
+npx cap add ios        # first time only
+npm run cap:sync       # builds the web code and copies it into the iOS project
 npx cap open ios
 ```
 
-In Xcode: select the **App** target, open **Signing & Capabilities**, choose
-your Apple Developer **Team**, then press Run to test on a simulator or your
-phone. To ship: **Product → Archive → Distribute App → App Store Connect**,
-then finish the listing in App Store Connect and submit for review.
+In Xcode: choose the **App** target → **Signing & Capabilities** → pick your Team,
+then press Run. After any web-code change, run `npm run cap:sync` again.
+To ship: **Product → Archive → Distribute App → App Store Connect**.
 
-## Build for Android
+## Android
 
 ```sh
-npx cap sync android
+npx cap add android    # first time only
+npm run cap:sync
 npx cap open android
 ```
 
-In Android Studio: **Build → Generate Signed Bundle / APK**, then upload the
-`.aab` to the Google Play Console.
+## Notes
 
-## Before you submit to the App Store
-
-- Apple can reject apps that are only a website in a frame (guideline 4.2).
-  Add real phone features before submitting, such as push notifications, using
-  the device location for nearby games, and "add to calendar".
-- Add an app icon (1024x1024) and screenshots. `npx @capacitor/assets generate`
-  can make all icon and splash sizes from one image.
-- If people can create accounts, Apple requires an in-app way to delete the
-  account, and a privacy policy link.
-- Rally lets strangers meet, so include reporting and blocking of users.
+- Google sign-in is hidden inside the app (its redirect can't return to the app), so
+  the app uses email sign-in. That also means "Sign in with Apple" isn't required.
+- Apple requires an in-app way to delete an account, a privacy-policy link, and
+  reporting/blocking for apps with user-generated content (Rally already has
+  reporting and blocking). Add real phone features (push notifications, location)
+  to avoid a "just a website" rejection.

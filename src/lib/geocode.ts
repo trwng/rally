@@ -1,3 +1,8 @@
+import { Capacitor } from "@capacitor/core";
+
+// Inside the iPhone/Android app there is no local server, so use the live site.
+const API_BASE = Capacitor.isNativePlatform() ? "https://letsrallys.app" : "";
+
 export interface GeoPlace {
   display_name: string;
   city: string;
@@ -112,7 +117,7 @@ export async function searchPlaces(
     params.set("lng", String(viewer.lng));
   }
 
-  const res = await fetch(`/api/geocode?${params.toString()}`, { signal });
+  const res = await fetch(`${API_BASE}/api/geocode?${params.toString()}`, { signal });
   if (!res.ok) {
     throw new GeocodeError("Suggestions unavailable");
   }

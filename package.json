@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "cap:sync": "cap sync"
+    "cap:sync": "npm run build:native && cap sync",
+    "build:native": "vite build --config vite.native.config.ts"
   },
   "dependencies": {
     "@capacitor/android": "^8.6.0",
