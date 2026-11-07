@@ -18,8 +18,8 @@ is in the store).
    cd rally
    bun install        # or: npm install
    ```
-3. Open `capacitor.config.ts` and set `RALLY_URL` to Rally's live web address,
-   for example `https://your-app.lovable.app`. It must be `https://`.
+3. The live web address is already set to `https://letsrallys.app` in
+   `capacitor.config.ts` (it must be `https://`).
 4. Add the platforms:
    ```sh
    npx cap add ios
@@ -29,7 +29,7 @@ is in the store).
 ## Build and run on iPhone
 
 ```sh
-RALLY_URL=https://your-app.lovable.app npx cap sync ios
+npx cap sync ios
 npx cap open ios
 ```
 
@@ -41,7 +41,7 @@ then finish the listing in App Store Connect and submit for review.
 ## Build for Android
 
 ```sh
-RALLY_URL=https://your-app.lovable.app npx cap sync android
+npx cap sync android
 npx cap open android
 ```
 

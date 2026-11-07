@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from "@capacitor/cli";
 
 // Rally's live web address (the published Lovable link or your own domain).
-// Set it here, or pass it when syncing: RALLY_URL=https://example.com npx cap sync
-const RALLY_URL = process.env.RALLY_URL || "";
+// Defaults to the live site. Override it when syncing: RALLY_URL=https://example.com npx cap sync
+const RALLY_URL = process.env.RALLY_URL || "https://letsrallys.app";
 
 const config: CapacitorConfig = {
   appId: "com.trwng.rally",
