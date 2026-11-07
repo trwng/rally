@@ -10,8 +10,6 @@ is in the store).
 
 ## Before you start
 
-- `src/components/rally/KudosSheet.tsx` is missing from this repo (it's imported by
-  `PastGameFeed.tsx`), so the build fails. Copy that file from Lovable into the repo.
 - Copy `.env.example` to `.env` and fill in `VITE_SUPABASE_PUBLISHABLE_KEY` (the same
   public key the website uses).
 
