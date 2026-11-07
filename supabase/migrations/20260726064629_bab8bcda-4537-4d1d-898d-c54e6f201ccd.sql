@@ -1,0 +1,1 @@
+ALTER TABLE public.game_players REPLICA IDENTITY FULL;

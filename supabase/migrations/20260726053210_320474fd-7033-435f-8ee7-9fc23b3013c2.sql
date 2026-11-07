@@ -1,0 +1,1 @@
+ALTER VIEW public.pool_profiles_public SET (security_invoker = on);
