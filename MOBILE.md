@@ -8,10 +8,7 @@ untouched.
 App ID: `com.trwng.rally` (set in `capacitor.config.ts`; can't change once the app
 is in the store).
 
-## Before you start
-
-- Copy `.env.example` to `.env` and fill in `VITE_SUPABASE_PUBLISHABLE_KEY` (the same
-  public key the website uses).
+The public Supabase address and key are in `.env.production`, so no extra setup is needed.
 
 ## Build and run on iPhone (Mac with Xcode)
 
