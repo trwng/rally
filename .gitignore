@@ -1,0 +1,9 @@
+node_modules
+.output
+.wrangler
+dist
+ios/App/Pods
+ios/App/build
+android/.gradle
+android/build
+android/app/build
