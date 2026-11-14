@@ -2,7 +2,7 @@ export function TermsContent() {
   return (
     <div className="space-y-4 text-[13px] leading-relaxed text-foreground">
       <p className="text-muted-foreground">
-        Last updated: {new Date().toLocaleDateString()}
+        Last updated: November 14, 2026
       </p>
       <p>
         Welcome to Rally. By creating an account or using the app, you agree to
@@ -38,36 +38,53 @@ export function TermsContent() {
         pool from users 18+. You may only interact with users in your own pool.
       </p>
 
-      <h3 className="font-bold text-[14px] mt-2">4. Your conduct</h3>
+      <h3 className="font-bold text-[14px] mt-2">4. Your conduct — zero tolerance</h3>
       <p>
-        You agree not to harass, threaten, discriminate against, or endanger
-        other users; not to post false, illegal, or misleading games; and not
-        to use Rally for commercial solicitation without permission. We may
-        suspend or remove accounts that violate these rules.
+        There is no tolerance for objectionable content or abusive users. You
+        agree not to harass, bully, threaten, discriminate against, or endanger
+        other users; not to post hateful, sexual, violent, illegal, or
+        misleading content; not to impersonate anyone; and not to use Rally for
+        commercial solicitation without permission. We remove content and
+        suspend or delete accounts that violate these rules.
       </p>
 
-      <h3 className="font-bold text-[14px] mt-2">5. Content</h3>
+      <h3 className="font-bold text-[14px] mt-2">5. Reporting and blocking</h3>
+      <p>
+        You can report any user, message, game, or group from inside the app,
+        and you can block any user at any time. Reports are reviewed by the
+        Rally team, and we aim to act on them within 24 hours. Blocked users
+        can't see you or contact you.
+      </p>
+
+      <h3 className="font-bold text-[14px] mt-2">6. Content</h3>
       <p>
         You are responsible for anything you post (game details, messages,
         profile info). Don't share other users' private contact information
         without their consent.
       </p>
 
-      <h3 className="font-bold text-[14px] mt-2">6. No warranty</h3>
+      <h3 className="font-bold text-[14px] mt-2">7. No warranty</h3>
       <p>
         Rally is provided "as is" without warranty of any kind. We do not
         guarantee that games will happen, that other players will show up, or
         that the app will always be available.
       </p>
 
-      <h3 className="font-bold text-[14px] mt-2">7. Limitation of liability</h3>
+      <h3 className="font-bold text-[14px] mt-2">8. Limitation of liability</h3>
       <p>
         To the maximum extent allowed by law, Rally and its operators are not
         liable for any indirect, incidental, or consequential damages arising
         from your use of the app or any meetup arranged through it.
       </p>
 
-      <h3 className="font-bold text-[14px] mt-2">8. Changes</h3>
+      <h3 className="font-bold text-[14px] mt-2">9. Deleting your account</h3>
+      <p>
+        You can delete your account at any time from the You tab in the Rally
+        iPhone app, or by emailing support@letsrallys.app. This permanently
+        removes your profile, games you host, messages, photos, and other data.
+      </p>
+
+      <h3 className="font-bold text-[14px] mt-2">10. Changes</h3>
       <p>
         We may update these terms. Continued use after updates means you accept
         the new terms.
@@ -80,7 +97,7 @@ export function PrivacyContent() {
   return (
     <div className="space-y-4 text-[13px] leading-relaxed text-foreground">
       <p className="text-muted-foreground">
-        Last updated: {new Date().toLocaleDateString()}
+        Last updated: November 14, 2026
       </p>
       <p>
         This Privacy Policy explains what information Rally collects and how
@@ -126,9 +143,13 @@ export function PrivacyContent() {
       <h3 className="font-bold text-[14px] mt-2">Your choices</h3>
       <p>
         You can edit your profile, remove contact info, leave games and
-        groups, or log out at any time. Contact us to request account
-        deletion.
+        groups, or log out at any time. You can permanently delete your account
+        and all of your data from the You tab in the Rally iPhone app, or by
+        emailing support@letsrallys.app.
       </p>
+
+      <h3 className="font-bold text-[14px] mt-2">Contact</h3>
+      <p>Questions or requests: support@letsrallys.app</p>
     </div>
   );
 }
