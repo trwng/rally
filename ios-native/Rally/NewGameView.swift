@@ -10,6 +10,7 @@ struct NewGameView: View {
     @State private var when = Date().addingTimeInterval(3600 * 3)
     @State private var location = ""
     @State private var notes = ""
+    @State private var groupId: String = ""
     @State private var saving = false
     @State private var errorText: String?
 
@@ -27,6 +28,16 @@ struct NewGameView: View {
                 Section("When & where") {
                     DatePicker("Starts", selection: $when, in: Date()...)
                     TextField("Location (e.g. Piedmont Park courts)", text: $location)
+                }
+                if !store.groups.filter({ store.myRole(in: $0.id) != nil }).isEmpty {
+                    Section("Group (optional)") {
+                        Picker("Post to", selection: $groupId) {
+                            Text("Everyone").tag("")
+                            ForEach(store.groups.filter { store.myRole(in: $0.id) != nil }) { g in
+                                Text(g.name).tag(g.id)
+                            }
+                        }
+                    }
                 }
                 Section("Players") {
                     Stepper("Spots: \(spots)", value: $spots, in: 2...30)
@@ -58,7 +69,8 @@ struct NewGameView: View {
         do {
             try await store.createGame(
                 sportKey: sportKey, skill: skill, spots: spots, when: when,
-                location: location.trimmingCharacters(in: .whitespaces), notes: notes
+                location: location.trimmingCharacters(in: .whitespaces), notes: notes,
+                groupId: groupId.isEmpty ? nil : groupId
             )
             dismiss()
         } catch {

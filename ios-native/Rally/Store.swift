@@ -178,7 +178,7 @@ final class Store: ObservableObject {
         try await reloadGames()
     }
 
-    func createGame(sportKey: String, skill: String, spots: Int, when: Date, location: String, notes: String) async throws {
+    func createGame(sportKey: String, skill: String, spots: Int, when: Date, location: String, notes: String, groupId: String? = nil) async throws {
         guard let uid = userId, let me = profile else { return }
         let f = DateFormatter()
         f.dateFormat = "EEE, MMM d · h:mm a"
@@ -195,7 +195,8 @@ final class Store: ObservableObject {
             lng: me.lng,
             spots_total: spots,
             skill: skill,
-            notes: notes.isEmpty ? nil : notes
+            notes: notes.isEmpty ? nil : notes,
+            group_id: groupId
         )
         let gameId = try await api.insertReturningId("games", body: row)
 
@@ -514,6 +515,94 @@ struct PersonRef: Identifiable, Hashable {
 
 struct RequestItem: Identifiable {
     let req: FriendRequest
+    let person: Profile?
+    var id: String { req.id }
+}
+
+// MARK: - Group actions
+
+extension Store {
+    func pendingRequests(for groupId: String) -> [RequestRow] {
+        joinRequests.filter { $0.groupId == groupId && $0.status == "pending" }
+            .map { RequestRow(req: $0, person: person($0.userId)) }
+    }
+
+    func myJoinStatus(_ groupId: String) -> String? {
+        joinRequests.first { $0.groupId == groupId && $0.userId == userId && $0.status == "pending" }?.status
+    }
+
+    func gamesIn(group id: String) -> [Game] {
+        games.filter { $0.groupId == id }
+    }
+
+    func createGroup(name: String, description: String, sports: [String], city: String, isPublic: Bool) async throws {
+        guard let uid = userId else { return }
+        _ = try await api.insertDictReturningId("groups", [
+            "pool": profile?.pool ?? "adult",
+            "name": name,
+            "description": description.isEmpty ? nil : description,
+            "sports": sports,
+            "city": city.isEmpty ? nil : city,
+            "lat": profile?.lat,
+            "lng": profile?.lng,
+            "is_public": isPublic,
+            "created_by": uid,
+        ])
+        await reloadSocial()
+    }
+
+    func requestToJoin(_ groupId: String) async throws {
+        guard let uid = userId else { return }
+        try await api.insertDict("group_join_requests", [
+            "group_id": groupId, "user_id": uid, "pool": profile?.pool ?? "adult", "status": "pending"])
+        await reloadSocial()
+    }
+
+    func decide(_ requestId: String, approve: Bool) async throws {
+        try await api.updateDict("group_join_requests", query: [URLQueryItem(name: "id", value: "eq.\(requestId)")],
+                                 ["status": approve ? "approved" : "denied"])
+        await reloadSocial()
+    }
+
+    func leaveGroup(_ groupId: String) async throws {
+        guard let uid = userId else { return }
+        try await removeMember(groupId, uid)
+    }
+
+    func removeMember(_ groupId: String, _ uid: String) async throws {
+        try await api.delete("group_members", query: [
+            URLQueryItem(name: "group_id", value: "eq.\(groupId)"), URLQueryItem(name: "user_id", value: "eq.\(uid)")])
+        await reloadSocial()
+    }
+
+    func promote(_ groupId: String, _ uid: String) async throws {
+        try await api.updateDict("group_members", query: [
+            URLQueryItem(name: "group_id", value: "eq.\(groupId)"), URLQueryItem(name: "user_id", value: "eq.\(uid)")],
+            ["role": "admin"])
+        await reloadSocial()
+    }
+
+    func deleteGroup(_ groupId: String) async throws {
+        try await api.delete("groups", query: [URLQueryItem(name: "id", value: "eq.\(groupId)")])
+        await reloadSocial()
+    }
+
+    func createInvite(_ groupId: String) async throws -> String {
+        guard let uid = userId else { throw APIError(message: "Not signed in.") }
+        let code = String(UUID().uuidString.replacingOccurrences(of: "-", with: "").prefix(8)).uppercased()
+        try await api.insertDict("group_invites", [
+            "group_id": groupId, "code": code, "created_by": uid, "pool": profile?.pool ?? "adult"])
+        return code
+    }
+
+    func joinWithCode(_ code: String) async throws {
+        _ = try await api.rpc("consume_group_invite", ["_code": code])
+        await reloadSocial()
+    }
+}
+
+struct RequestRow: Identifiable {
+    let req: GroupJoinRequest
     let person: Profile?
     var id: String { req.id }
 }

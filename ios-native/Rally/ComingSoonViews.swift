@@ -1,9 +1,5 @@
 import SwiftUI
 
-struct GroupsView: View {
-    var body: some View { ComingSoon(title: "Groups", note: "Crews and clubs are next on the list.") }
-}
-
 struct ComingSoon: View {
     let title: String
     let note: String
