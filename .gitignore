@@ -7,3 +7,4 @@ ios/App/build
 android/.gradle
 android/build
 android/app/build
+build.log

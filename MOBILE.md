@@ -15,12 +15,12 @@ The public Supabase address and key are in `.env.production`, so no extra setup 
 ```sh
 npm install
 npx cap add ios        # first time only
-npm run cap:sync       # builds the web code and copies it into the iOS project
+sh scripts/update-ios.sh   # builds Rally and copies it into the iPhone project
 npx cap open ios
 ```
 
 In Xcode: choose the **App** target → **Signing & Capabilities** → pick your Team,
-then press Run. After any web-code change, run `npm run cap:sync` again.
+then press Run. After any web-code change, run `sh scripts/update-ios.sh` again.
 To ship: **Product → Archive → Distribute App → App Store Connect**.
 
 ## Android

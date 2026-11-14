@@ -11,6 +11,19 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { Capacitor } from "@capacitor/core";
+
+// Inside the iPhone/Android app, make the page feel like an app: no pinch zoom,
+// no scroll bars, no bounce, and content fills the whole screen. The website is unchanged.
+if (typeof document !== "undefined" && Capacitor.isNativePlatform()) {
+  document.documentElement.classList.add("native");
+  document
+    .querySelector('meta[name="viewport"]')
+    ?.setAttribute(
+      "content",
+      "width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no",
+    );
+}
 
 function NotFoundComponent() {
   return (

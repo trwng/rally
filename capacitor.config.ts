@@ -7,7 +7,8 @@ const config: CapacitorConfig = {
   appId: "com.trwng.rally",
   appName: "Rally",
   webDir: "dist/client",
-  ios: { contentInset: "automatic" },
+  // Let the page fill the whole screen; the page handles the notch/status bar itself.
+  ios: { contentInset: "never", scrollEnabled: true },
   plugins: {
     // Sends web requests through the phone's native networking (avoids CORS blocks).
     CapacitorHttp: { enabled: true },

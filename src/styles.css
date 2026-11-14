@@ -181,3 +181,41 @@
 .leaflet-popup {
   z-index: 2 !important;
 }
+
+/* ---- Only inside the iPhone/Android app (html.native is set in __root.tsx) ---- */
+html.native,
+html.native body {
+  background-color: var(--background);
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+html.native input,
+html.native textarea,
+html.native [contenteditable] {
+  -webkit-user-select: text;
+  user-select: text;
+}
+html.native ::-webkit-scrollbar {
+  display: none;
+}
+html.native * {
+  scrollbar-width: none;
+}
+/* Keep the status bar area (clock, battery) clean when content scrolls up under it. */
+html.native::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: env(safe-area-inset-top);
+  background-color: var(--background);
+  z-index: 2147483647;
+  pointer-events: none;
+}
+html.native body {
+  padding-top: env(safe-area-inset-top);
+}
