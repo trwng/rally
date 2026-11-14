@@ -1,9 +1,5 @@
 import SwiftUI
 
-struct ChatsView: View {
-    var body: some View { ComingSoon(title: "Chats", note: "Game group chats and direct messages are next on the list.") }
-}
-
 struct GroupsView: View {
     var body: some View { ComingSoon(title: "Groups", note: "Crews and clubs are next on the list.") }
 }

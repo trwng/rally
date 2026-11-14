@@ -145,19 +145,78 @@ final class API {
         _ = try await raw("rest/v1/\(table)", method: "PATCH", query: query, body: data, prefer: "return=minimal")
     }
 
+    // MARK: Free-form rows (dictionaries)
+
+    private func clean(_ d: [String: Any?]) -> [String: Any] {
+        var out: [String: Any] = [:]
+        for (k, v) in d { out[k] = v ?? NSNull() }
+        return out
+    }
+
+    func insertDict(_ table: String, _ dict: [String: Any?], upsertOn: String? = nil) async throws {
+        let body = try JSONSerialization.data(withJSONObject: clean(dict))
+        var q: [URLQueryItem] = []
+        var prefer = "return=minimal"
+        if let c = upsertOn {
+            q.append(URLQueryItem(name: "on_conflict", value: c))
+            prefer = "resolution=merge-duplicates,return=minimal"
+        }
+        _ = try await raw("rest/v1/\(table)", method: "POST", query: q, body: body, prefer: prefer)
+    }
+
+    func insertDictReturningId(_ table: String, _ dict: [String: Any?]) async throws -> String {
+        let body = try JSONSerialization.data(withJSONObject: clean(dict))
+        let out = try await raw(
+            "rest/v1/\(table)", method: "POST",
+            query: [URLQueryItem(name: "select", value: "id")],
+            body: body, prefer: "return=representation"
+        )
+        let rows = try decoder.decode([IdRow].self, from: out)
+        guard let id = rows.first?.id else { throw APIError(message: "Couldn't save that.") }
+        return id
+    }
+
+    func updateDict(_ table: String, query: [URLQueryItem], _ dict: [String: Any?]) async throws {
+        let body = try JSONSerialization.data(withJSONObject: clean(dict))
+        _ = try await raw("rest/v1/\(table)", method: "PATCH", query: query, body: body, prefer: "return=minimal")
+    }
+
+    /// Calls a database function and returns its raw JSON.
+    func rpc(_ name: String, _ params: [String: Any]) async throws -> Data {
+        let body = try JSONSerialization.data(withJSONObject: params)
+        return try await raw("rest/v1/rpc/\(name)", method: "POST", body: body)
+    }
+
     // MARK: Storage
 
-    /// Temporary link to a private avatar image.
-    func signedAvatarURL(path: String) async -> URL? {
+    /// Temporary link to a private file in a storage bucket.
+    func signedURL(bucket: String, path: String) async -> URL? {
         struct Out: Decodable { let signedURL: String }
         do {
             let body = try JSONSerialization.data(withJSONObject: ["expiresIn": 3600])
-            let data = try await raw("storage/v1/object/sign/avatars/\(path)", method: "POST", body: body)
+            let data = try await raw("storage/v1/object/sign/\(bucket)/\(path)", method: "POST", body: body)
             let out = try JSONDecoder().decode(Out.self, from: data)
             return URL(string: Config.supabaseURL.absoluteString + "/storage/v1" + out.signedURL)
         } catch {
             return nil
         }
+    }
+
+    func signedAvatarURL(path: String) async -> URL? {
+        await signedURL(bucket: "avatars", path: path)
+    }
+
+    func upload(bucket: String, path: String, data: Data, contentType: String, upsert: Bool = false) async throws {
+        _ = try await raw(
+            "storage/v1/object/\(bucket)/\(path)", method: "POST", body: data,
+            contentType: contentType,
+            headers: ["x-upsert": upsert ? "true" : "false", "cache-control": "3600"]
+        )
+    }
+
+    func removeObjects(bucket: String, paths: [String]) async {
+        guard let body = try? JSONSerialization.data(withJSONObject: ["prefixes": paths]) else { return }
+        _ = try? await raw("storage/v1/object/\(bucket)", method: "DELETE", body: body)
     }
 
     // MARK: Plumbing
@@ -169,7 +228,9 @@ final class API {
         body: Data? = nil,
         prefer: String? = nil,
         authorized: Bool = true,
-        retry: Bool = true
+        retry: Bool = true,
+        contentType: String = "application/json",
+        headers: [String: String] = [:]
     ) async throws -> Data {
         var comps = URLComponents(url: Config.supabaseURL.appendingPathComponent(path), resolvingAgainstBaseURL: false)!
         if !query.isEmpty { comps.queryItems = query }
@@ -179,7 +240,8 @@ final class API {
         req.httpMethod = method
         req.httpBody = body
         req.setValue(Config.anonKey, forHTTPHeaderField: "apikey")
-        if body != nil { req.setValue("application/json", forHTTPHeaderField: "Content-Type") }
+        if body != nil { req.setValue(contentType, forHTTPHeaderField: "Content-Type") }
+        for (k, v) in headers { req.setValue(v, forHTTPHeaderField: k) }
         if let prefer { req.setValue(prefer, forHTTPHeaderField: "Prefer") }
         if authorized, let token = session?.accessToken {
             req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
@@ -191,7 +253,8 @@ final class API {
         if status == 401, authorized, retry, session != nil {
             if await refresh() {
                 return try await raw(path, method: method, query: query, body: body,
-                                     prefer: prefer, authorized: authorized, retry: false)
+                                     prefer: prefer, authorized: authorized, retry: false,
+                                     contentType: contentType, headers: headers)
             }
         }
         guard (200..<300).contains(status) else {

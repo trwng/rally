@@ -98,3 +98,62 @@ struct EmptyNote: View {
             .padding(.vertical, 28)
     }
 }
+
+/// Avatar for a profile (photo if they have one, otherwise colored initials).
+struct PersonAvatar: View {
+    let profile: Profile?
+    var fallbackName = "?"
+    var size: CGFloat = 40
+    var body: some View {
+        AvatarView(
+            name: profile?.fullName ?? fallbackName,
+            seed: profile?.avatarSeed ?? profile?.id ?? fallbackName,
+            path: profile?.avatarUrl,
+            size: size
+        )
+    }
+}
+
+/// Tappable name/avatar that opens that player's profile.
+extension Store {
+    func openPlayer(_ id: String) {
+        if id == userId { return }
+        shownPlayer = PersonRef(id: id)
+    }
+}
+
+struct ChatImage: View {
+    let path: String
+    @State private var url: URL?
+    var body: some View {
+        Group {
+            if let url {
+                AsyncImage(url: url) { phase in
+                    if let image = phase.image {
+                        image.resizable().scaledToFill()
+                    } else {
+                        Theme.muted
+                    }
+                }
+            } else {
+                Theme.muted
+            }
+        }
+        .frame(width: 200, height: 200)
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .task { url = await API.shared.signedURL(bucket: "chat_photos", path: path) }
+    }
+}
+
+import UIKit
+
+/// Shrinks a picked photo and turns it into JPEG data for upload.
+func compressedJPEG(from data: Data, maxSide: CGFloat = 1600, quality: CGFloat = 0.75) -> Data? {
+    guard let image = UIImage(data: data) else { return nil }
+    let longest = max(image.size.width, image.size.height)
+    let scale = longest > maxSide ? maxSide / longest : 1
+    let target = CGSize(width: image.size.width * scale, height: image.size.height * scale)
+    let renderer = UIGraphicsImageRenderer(size: target)
+    let resized = renderer.image { _ in image.draw(in: CGRect(origin: .zero, size: target)) }
+    return resized.jpegData(compressionQuality: quality)
+}

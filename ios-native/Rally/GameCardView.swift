@@ -31,14 +31,19 @@ struct GameCardView: View {
                         Spacer()
                         Text(game.skill ?? "").eyebrow().font(.system(size: 10, weight: .bold))
                     }
-                    HStack(spacing: 6) {
-                        AvatarView(name: game.hostName, seed: game.hostAvatarSeed ?? game.hostUserId, size: 16)
-                        Text(isHost ? "You" : game.hostName).lineLimit(1)
-                        Text("·")
-                        Text(store.distanceLabel(game))
+                    Button {
+                        store.openPlayer(game.hostUserId)
+                    } label: {
+                        HStack(spacing: 6) {
+                            AvatarView(name: game.hostName, seed: game.hostAvatarSeed ?? game.hostUserId, size: 16)
+                            Text(isHost ? "You" : game.hostName).lineLimit(1)
+                            Text("·")
+                            Text(store.distanceLabel(game))
+                        }
+                        .font(.system(size: 13))
+                        .foregroundStyle(Theme.mutedForeground)
                     }
-                    .font(.system(size: 13))
-                    .foregroundStyle(Theme.mutedForeground)
+                    .buttonStyle(.plain)
                 }
             }
 

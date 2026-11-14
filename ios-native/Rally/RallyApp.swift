@@ -35,6 +35,8 @@ struct RootView: View {
 }
 
 struct MainTabView: View {
+    @EnvironmentObject var store: Store
+
     var body: some View {
         TabView {
             HomeView()
@@ -45,8 +47,19 @@ struct MainTabView: View {
                 .tabItem { Label("Groups", systemImage: "person.2") }
             ChatsView()
                 .tabItem { Label("Chats", systemImage: "bubble.left") }
+                .badge(store.unreadTotal)
             ProfileView()
                 .tabItem { Label("You", systemImage: "person") }
+        }
+        .sheet(item: $store.shownPlayer) { ref in
+            PlayerProfileView(id: ref.id)
+        }
+        .task {
+            // Keep chats, requests and groups fresh while the app is open.
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 15_000_000_000)
+                await store.reloadSocial()
+            }
         }
     }
 }
