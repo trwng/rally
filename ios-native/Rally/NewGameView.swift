@@ -9,6 +9,7 @@ struct NewGameView: View {
     @State private var spots = 6
     @State private var when = Date().addingTimeInterval(3600 * 3)
     @State private var location = ""
+    @State private var place: PlaceResult?
     @State private var notes = ""
     @State private var groupId: String = ""
     @State private var saving = false
@@ -27,7 +28,8 @@ struct NewGameView: View {
                 }
                 Section("When & where") {
                     DatePicker("Starts", selection: $when, in: Date()...)
-                    TextField("Location (e.g. Piedmont Park courts)", text: $location)
+                    PlaceField(placeholder: "Location (e.g. Piedmont Park courts)", text: $location, selected: $place,
+                               near: store.profile.flatMap { p in p.lat.flatMap { a in p.lng.map { (a, $0) } } })
                 }
                 if !store.groups.filter({ store.myRole(in: $0.id) != nil }).isEmpty {
                     Section("Group (optional)") {
@@ -70,7 +72,8 @@ struct NewGameView: View {
             try await store.createGame(
                 sportKey: sportKey, skill: skill, spots: spots, when: when,
                 location: location.trimmingCharacters(in: .whitespaces), notes: notes,
-                groupId: groupId.isEmpty ? nil : groupId
+                groupId: groupId.isEmpty ? nil : groupId,
+                lat: place?.lat, lng: place?.lng
             )
             dismiss()
         } catch {

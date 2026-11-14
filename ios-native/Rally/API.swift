@@ -145,6 +145,18 @@ final class API {
         _ = try await raw("rest/v1/\(table)", method: "PATCH", query: query, body: data, prefer: "return=minimal")
     }
 
+    /// Name saved on the account at sign-up (falls back to the email name).
+    func currentUserName() async -> String? {
+        struct U: Decodable {
+            struct M: Decodable { let fullName: String? }
+            let email: String?
+            let userMetadata: M?
+        }
+        guard let data = try? await raw("auth/v1/user"), let u = try? decoder.decode(U.self, from: data) else { return nil }
+        if let n = u.userMetadata?.fullName?.trimmingCharacters(in: .whitespaces), !n.isEmpty { return n }
+        return u.email?.split(separator: "@").first.map(String.init)
+    }
+
     // MARK: Free-form rows (dictionaries)
 
     private func clean(_ d: [String: Any?]) -> [String: Any] {

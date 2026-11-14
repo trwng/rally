@@ -3,6 +3,7 @@ import SwiftUI
 struct HomeView: View {
     @EnvironmentObject var store: Store
     @State private var filter: String?
+    @State private var showPlaces = false
 
     private var nearYou: [Game] {
         let list = filter == nil ? store.games : store.games.filter { $0.sport == filter }
@@ -43,6 +44,10 @@ struct HomeView: View {
                     }
 
                     section("Near you") {
+                        Button { showPlaces = true } label: {
+                            Label("Find courts & parks nearby", systemImage: "location.magnifyingglass")
+                                .font(.system(size: 13, weight: .semibold))
+                        }
                         SportChips(selection: $filter).padding(.horizontal, -16).padding(.bottom, 8)
                         if nearYou.isEmpty {
                             EmptyNote(text: "No games yet. Start one from the Find tab.")
@@ -61,6 +66,7 @@ struct HomeView: View {
             .background(Theme.background)
             .refreshable { await store.refresh() }
             .toolbar(.hidden, for: .navigationBar)
+            .sheet(isPresented: $showPlaces) { NearbyPlacesView() }
         }
     }
 
@@ -76,7 +82,7 @@ struct HomeView: View {
                 Rectangle().fill(Theme.border).frame(width: 1)
                 stat("\(store.upcoming.count)", "Upcoming")
                 Rectangle().fill(Theme.border).frame(width: 1)
-                stat("\(store.games.filter { store.isHost($0) }.count)", "Hosting")
+                stat("\(store.streak)", "Day streak")
             }
             .frame(height: 72)
             Hairline()

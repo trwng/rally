@@ -3,12 +3,14 @@ import SwiftUI
 @main
 struct RallyApp: App {
     @StateObject private var store = Store()
+    @AppStorage("appearance") private var appearance = AppearanceMode.system.rawValue
 
     var body: some Scene {
         WindowGroup {
             RootView()
                 .environmentObject(store)
                 .tint(Theme.primary)
+                .preferredColorScheme(AppearanceMode(rawValue: appearance)?.scheme)
                 .task { await store.start() }
         }
     }
@@ -27,7 +29,7 @@ struct RootView: View {
         case .signedOut:
             AuthView()
         case .needsProfile:
-            NeedsProfileView()
+            OnboardingView()
         case .ready:
             MainTabView()
         }
@@ -64,25 +66,3 @@ struct MainTabView: View {
     }
 }
 
-/// Shown when someone has an account but hasn't finished setting up their profile.
-struct NeedsProfileView: View {
-    @EnvironmentObject var store: Store
-
-    var body: some View {
-        VStack(spacing: 16) {
-            Text("One more step")
-                .font(.system(size: 28, weight: .black))
-            Text("Finish setting up your profile on letsrallys.app, then come back and pull to refresh. Setup inside the app is coming next.")
-                .font(.system(size: 15))
-                .foregroundStyle(Theme.mutedForeground)
-                .multilineTextAlignment(.center)
-            Button("I've finished — check again") { Task { await store.loadAll() } }
-                .buttonStyle(PrimaryButtonStyle())
-            Button("Sign out") { store.signOut() }
-                .buttonStyle(PrimaryButtonStyle(filled: false))
-        }
-        .padding(24)
-        .frame(maxHeight: .infinity)
-        .background(Theme.background.ignoresSafeArea())
-    }
-}

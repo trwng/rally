@@ -178,7 +178,7 @@ final class Store: ObservableObject {
         try await reloadGames()
     }
 
-    func createGame(sportKey: String, skill: String, spots: Int, when: Date, location: String, notes: String, groupId: String? = nil) async throws {
+    func createGame(sportKey: String, skill: String, spots: Int, when: Date, location: String, notes: String, groupId: String? = nil, lat: Double? = nil, lng: Double? = nil) async throws {
         guard let uid = userId, let me = profile else { return }
         let f = DateFormatter()
         f.dateFormat = "EEE, MMM d · h:mm a"
@@ -191,8 +191,8 @@ final class Store: ObservableObject {
             when_label: f.string(from: when),
             when_at: isoString(when),
             location: location,
-            lat: me.lat,
-            lng: me.lng,
+            lat: lat ?? me.lat,
+            lng: lng ?? me.lng,
             spots_total: spots,
             skill: skill,
             notes: notes.isEmpty ? nil : notes,
@@ -605,4 +605,93 @@ struct RequestRow: Identifiable {
     let req: GroupJoinRequest
     let person: Profile?
     var id: String { req.id }
+}
+
+
+// MARK: - Past games, activity, profile editing, onboarding
+
+struct ActivityDay: Identifiable {
+    let date: Date
+    let count: Int
+    var id: Date { date }
+}
+
+extension Store {
+    /// Everyone who played: the host plus anyone who joined.
+    func roster(of game: Game) -> [String] {
+        var ids = players.filter { $0.gameId == game.id }.compactMap { $0.userId }
+        if !ids.contains(game.hostUserId) { ids.append(game.hostUserId) }
+        return ids
+    }
+
+    /// Finished games I hosted or joined, newest first.
+    var pastGames: [Game] {
+        allGames
+            .filter { $0.isOver && (isHost($0) || isJoined($0)) }
+            .sorted { ($0.startDate ?? .distantPast) > ($1.startDate ?? .distantPast) }
+    }
+
+    func activity(days: Int = 119) -> [ActivityDay] {
+        let cal = Calendar.current
+        let today = cal.startOfDay(for: Date())
+        var counts: [Date: Int] = [:]
+        for g in pastGames {
+            guard let d = g.startDate else { continue }
+            counts[cal.startOfDay(for: d), default: 0] += 1
+        }
+        return (0..<days).reversed().compactMap { i in
+            guard let day = cal.date(byAdding: .day, value: -i, to: today) else { return nil }
+            return ActivityDay(date: day, count: counts[day] ?? 0)
+        }
+    }
+
+    var streak: Int {
+        var s = 0
+        for d in activity().reversed() {
+            if d.count > 0 { s += 1 } else { break }
+        }
+        return s
+    }
+
+    // Kudos helpers
+    func kudo(game: String, to id: String, kind: String) -> Kudo? {
+        kudos.first { $0.gameId == game && $0.fromUserId == userId && $0.toUserId == id && $0.kind == kind }
+    }
+
+    // Profile editing
+    func reloadProfile() async {
+        guard let uid = userId else { return }
+        if let rows: [Profile] = try? await api.select("profiles", query: [URLQueryItem(name: "id", value: "eq.\(uid)")]),
+           let me = rows.first {
+            profile = me
+        }
+    }
+
+    func updateProfile(_ patch: [String: Any?]) async throws {
+        guard let uid = userId else { return }
+        try await api.updateDict("profiles", query: [URLQueryItem(name: "id", value: "eq.\(uid)")], patch)
+        await reloadProfile()
+    }
+
+    func uploadAvatar(jpeg: Data) async throws {
+        guard let uid = userId else { return }
+        let path = "\(uid)/avatar-\(Int(Date().timeIntervalSince1970 * 1000)).jpg"
+        try await api.upload(bucket: "avatars", path: path, data: jpeg, contentType: "image/jpeg", upsert: true)
+        try await updateProfile(["avatar_url": path])
+    }
+
+    func removeAvatar() async throws {
+        if let old = profile?.avatarUrl { await api.removeObjects(bucket: "avatars", paths: [old]) }
+        try await updateProfile(["avatar_url": nil])
+    }
+
+    func completeOnboarding(dob: String, city: String, lat: Double, lng: Double, sports: [String: String]) async throws {
+        guard let uid = userId else { return }
+        let name = await api.currentUserName() ?? "Rally player"
+        try await api.insertDict("profiles", [
+            "id": uid, "full_name": name, "dob": dob, "pool": "adult",
+            "city": city, "lat": lat, "lng": lng, "sports": sports, "avatar_seed": name,
+        ])
+        await loadAll()
+    }
 }
