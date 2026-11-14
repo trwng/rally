@@ -226,6 +226,25 @@ final class API {
         )
     }
 
+    /// Lists the files stored under a folder (and its sub-folders) in a bucket.
+    func listObjects(bucket: String, prefix: String) async -> [String] {
+        struct Item: Decodable { let name: String; let id: String? }
+        func page(_ p: String) async -> [Item] {
+            guard let body = try? JSONSerialization.data(withJSONObject: ["prefix": p, "limit": 1000]),
+                  let data = try? await raw("storage/v1/object/list/\(bucket)", method: "POST", body: body) else { return [] }
+            return (try? JSONDecoder().decode([Item].self, from: data)) ?? []
+        }
+        var files: [String] = []
+        for item in await page(prefix) {
+            if item.id == nil {
+                files += await listObjects(bucket: bucket, prefix: prefix + item.name + "/")
+            } else {
+                files.append(prefix + item.name)
+            }
+        }
+        return files
+    }
+
     func removeObjects(bucket: String, paths: [String]) async {
         guard let body = try? JSONSerialization.data(withJSONObject: ["prefixes": paths]) else { return }
         _ = try? await raw("storage/v1/object/\(bucket)", method: "DELETE", body: body)

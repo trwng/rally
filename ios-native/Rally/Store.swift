@@ -685,6 +685,18 @@ extension Store {
         try await updateProfile(["avatar_url": nil])
     }
 
+    /// Permanently deletes the signed-in account and everything it owns.
+    func deleteAccount() async throws {
+        guard let uid = userId else { return }
+        // Remove uploaded files first (best effort), then the account itself.
+        for bucket in ["avatars", "chat_photos"] {
+            let files = await api.listObjects(bucket: bucket, prefix: "\(uid)/")
+            if !files.isEmpty { await api.removeObjects(bucket: bucket, paths: files) }
+        }
+        _ = try await api.rpc("delete_my_account", [:])
+        signOut()
+    }
+
     func completeOnboarding(dob: String, city: String, lat: Double, lng: Double, sports: [String: String]) async throws {
         guard let uid = userId else { return }
         let name = await api.currentUserName() ?? "Rally player"

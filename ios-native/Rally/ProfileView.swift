@@ -25,6 +25,9 @@ struct ProfileView: View {
     @State private var photoItem: PhotosPickerItem?
     @State private var uploading = false
     @State private var errorText: String?
+    @State private var legal: LegalDoc?
+    @State private var confirmDelete = false
+    @State private var deleting = false
 
     var body: some View {
         NavigationStack {
@@ -63,6 +66,13 @@ struct ProfileView: View {
             .sheet(isPresented: $editingSports) { EditSportsView() }
             .sheet(isPresented: $editingContact) { EditContactView() }
             .sheet(isPresented: $editingBio) { EditBioView() }
+            .sheet(item: $legal) { LegalView(doc: $0) }
+            .confirmationDialog("Delete your account?", isPresented: $confirmDelete, titleVisibility: .visible) {
+                Button("Delete account permanently", role: .destructive) { Task { await deleteAccount() } }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("This permanently deletes your profile, the games you host, your messages and photos. This can't be undone.")
+            }
             .onChange(of: photoItem) {
                 guard let item = photoItem else { return }
                 Task { await setPhoto(item) }
@@ -292,12 +302,15 @@ struct ProfileView: View {
 
     private var legalSection: some View {
         VStack(spacing: 12) {
-            Link(destination: URL(string: "\(Config.siteURL)/terms")!) { linkRow("Terms & Conditions") }
-            Link(destination: URL(string: "\(Config.siteURL)/privacy")!) { linkRow("Privacy Policy") }
-            Link(destination: URL(string: "mailto:support@letsrallys.app?subject=Delete%20my%20Rally%20account")!) { linkRow("Request account deletion") }
+            Button { legal = .terms } label: { linkRow("Terms & Conditions") }
+            Button { legal = .privacy } label: { linkRow("Privacy Policy") }
+            Link(destination: URL(string: "mailto:support@letsrallys.app")!) { linkRow("Contact support") }
             Button("Sign out") { confirmSignOut = true }
-                .buttonStyle(PrimaryButtonStyle(filled: false, destructive: true))
+                .buttonStyle(PrimaryButtonStyle(filled: false))
                 .padding(.top, 6)
+            Button(deleting ? "Deleting…" : "Delete account") { confirmDelete = true }
+                .buttonStyle(PrimaryButtonStyle(filled: false, destructive: true))
+                .disabled(deleting)
         }
         .padding(16)
     }
@@ -309,6 +322,17 @@ struct ProfileView: View {
             Image(systemName: "arrow.up.right").font(.system(size: 12))
         }
         .foregroundStyle(Theme.foreground)
+    }
+
+    private func deleteAccount() async {
+        deleting = true
+        errorText = nil
+        defer { deleting = false }
+        do {
+            try await store.deleteAccount()
+        } catch {
+            errorText = "Couldn't delete your account: \(error.localizedDescription)"
+        }
     }
 
     private func setPhoto(_ item: PhotosPickerItem) async {

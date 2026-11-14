@@ -10,6 +10,10 @@ struct HomeView: View {
         return Array(list.prefix(6))
     }
 
+    private var mapGames: [Game] {
+        filter == nil ? store.games : store.games.filter { $0.sport == filter }
+    }
+
     private var todayLabel: String {
         let f = DateFormatter()
         f.dateFormat = "EEEE, MMM d"
@@ -48,7 +52,14 @@ struct HomeView: View {
                             Label("Find courts & parks nearby", systemImage: "location.magnifyingglass")
                                 .font(.system(size: 13, weight: .semibold))
                         }
-                        SportChips(selection: $filter).padding(.horizontal, -16).padding(.bottom, 8)
+                        SportChips(selection: $filter).padding(.horizontal, -16).padding(.bottom, 4)
+                        GamesMap(
+                            games: mapGames,
+                            center: store.profile.flatMap { p in p.lat.flatMap { a in p.lng.map { (a, $0) } } }
+                        )
+                        .frame(height: 260)
+                        .clipShape(RoundedRectangle(cornerRadius: Theme.radius))
+                        .overlay(RoundedRectangle(cornerRadius: Theme.radius).stroke(Theme.border, lineWidth: 1))
                         if nearYou.isEmpty {
                             EmptyNote(text: "No games yet. Start one from the Find tab.")
                         } else {

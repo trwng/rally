@@ -113,7 +113,53 @@ enum NearbyPlaces {
         "running": "running|athletics", "cycling": "cycling|bmx",
     ]
 
+    /// Tries OpenStreetMap first, then falls back to Apple Maps so something always shows up.
     static func fetch(lat: Double, lng: Double, radiusM: Int, sport: String?, limit: Int = 40) async throws -> [NearbyPlace] {
+        if let osm = try? await fetchOverpass(lat: lat, lng: lng, radiusM: radiusM, sport: sport, limit: limit), !osm.isEmpty {
+            return osm
+        }
+        let apple = await fetchAppleMaps(lat: lat, lng: lng, radiusM: radiusM, sport: sport, limit: limit)
+        if apple.isEmpty { throw APIError(message: "Nothing found nearby. Try a bigger radius or a different sport.") }
+        return apple
+    }
+
+    private static func fetchAppleMaps(lat: Double, lng: Double, radiusM: Int, sport: String?, limit: Int) async -> [NearbyPlace] {
+        let queries: [String]
+        if let sport {
+            let name = allSports.first { $0.key == sport }?.name.lowercased() ?? sport
+            queries = ["\(name) courts", "\(name)"]
+        } else {
+            queries = ["sports courts", "park", "gym", "recreation center"]
+        }
+        var seen = Set<String>()
+        var out: [NearbyPlace] = []
+        for q in queries {
+            let req = MKLocalSearch.Request()
+            req.naturalLanguageQuery = q
+            req.region = MKCoordinateRegion(
+                center: CLLocationCoordinate2D(latitude: lat, longitude: lng),
+                latitudinalMeters: Double(radiusM) * 2, longitudinalMeters: Double(radiusM) * 2
+            )
+            guard let res = try? await MKLocalSearch(request: req).start() else { continue }
+            for item in res.mapItems {
+                let c = item.placemark.coordinate
+                let d = haversineMiles(lat, lng, c.latitude, c.longitude) * 1609.34
+                guard d <= Double(radiusM) * 1.5, let name = item.name else { continue }
+                let key = "\(name)|\(String(format: "%.3f", c.latitude))|\(String(format: "%.3f", c.longitude))"
+                if !seen.insert(key).inserted { continue }
+                let pm = item.placemark
+                let addr = [pm.thoroughfare, pm.locality].compactMap { $0 }.joined(separator: ", ")
+                out.append(NearbyPlace(
+                    id: key, name: name, type: q.prefix(1).uppercased() + q.dropFirst(),
+                    lat: c.latitude, lng: c.longitude, address: addr.isEmpty ? nil : addr,
+                    distanceM: d, sportTag: sport
+                ))
+            }
+        }
+        return Array(out.sorted { $0.distanceM < $1.distanceM }.prefix(limit))
+    }
+
+    private static func fetchOverpass(lat: Double, lng: Double, radiusM: Int, sport: String?, limit: Int) async throws -> [NearbyPlace] {
         let around = "(around:\(radiusM),\(lat),\(lng))"
         let query: String
         if let sport, let tag = sportTags[sport] {
@@ -131,6 +177,9 @@ enum NearbyPlaces {
             req.httpMethod = "POST"
             req.httpBody = query.data(using: .utf8)
             req.setValue("text/plain;charset=UTF-8", forHTTPHeaderField: "Content-Type")
+            req.setValue("Rally/1.0 (iOS app; https://letsrallys.app)", forHTTPHeaderField: "User-Agent")
+            req.setValue("application/json", forHTTPHeaderField: "Accept")
+            req.timeoutInterval = 25
             if let (data, _) = try? await URLSession.shared.data(for: req),
                let r = try? JSONDecoder().decode(OverpassResponse.self, from: data) {
                 response = r

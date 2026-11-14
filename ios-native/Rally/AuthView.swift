@@ -8,6 +8,8 @@ struct AuthView: View {
     @State private var email = ""
     @State private var password = ""
     @State private var agreed = false
+    @State private var showPassword = false
+    @State private var legal: LegalDoc?
     @State private var loading = false
     @State private var message: String?
     @State private var messageIsError = true
@@ -54,9 +56,36 @@ struct AuthView: View {
                             .focused($focus, equals: .email)
                     }
                     field("Password") {
-                        SecureField("At least 6 characters", text: $password)
+                        HStack(spacing: 8) {
+                            Group {
+                                if showPassword {
+                                    TextField("At least 6 characters", text: $password)
+                                } else {
+                                    SecureField("At least 6 characters", text: $password)
+                                }
+                            }
                             .textContentType(isSignup ? .newPassword : .password)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
                             .focused($focus, equals: .password)
+                            Button {
+                                showPassword.toggle()
+                            } label: {
+                                Image(systemName: showPassword ? "eye.slash" : "eye")
+                                    .font(.system(size: 16))
+                                    .foregroundStyle(Theme.mutedForeground)
+                                    .frame(width: 32, height: 32)
+                            }
+                            .accessibilityLabel(showPassword ? "Hide password" : "Show password")
+                        }
+                    }
+
+                    if isSignup {
+                        VStack(alignment: .leading, spacing: 5) {
+                            requirement("Your name", ok: !name.trimmingCharacters(in: .whitespaces).isEmpty, touched: !name.isEmpty)
+                            requirement("A valid email address", ok: emailLooksValid, touched: !email.isEmpty)
+                            requirement("Password is at least 6 characters", ok: password.count >= 6, touched: !password.isEmpty)
+                        }
                     }
 
                     if isSignup {
@@ -74,8 +103,8 @@ struct AuthView: View {
                         }
                         .buttonStyle(.plain)
                         HStack(spacing: 14) {
-                            Link("Terms", destination: URL(string: "\(Config.siteURL)/terms")!)
-                            Link("Privacy Policy", destination: URL(string: "\(Config.siteURL)/privacy")!)
+                            Button("Terms") { legal = .terms }
+                            Button("Privacy Policy") { legal = .privacy }
                         }
                         .font(.system(size: 12, weight: .semibold))
                     }
@@ -94,7 +123,7 @@ struct AuthView: View {
                     }
                     .buttonStyle(PrimaryButtonStyle())
                     .frame(height: 44)
-                    .disabled(loading || (isSignup && !agreed) || email.isEmpty || password.count < 6)
+                    .disabled(loading || (isSignup && (!agreed || name.trimmingCharacters(in: .whitespaces).isEmpty)) || !emailLooksValid || password.count < 6)
                     .opacity((isSignup && !agreed) ? 0.5 : 1)
                     .padding(.top, 4)
                 }
@@ -119,6 +148,24 @@ struct AuthView: View {
         .scrollIndicators(.hidden)
         .scrollDismissesKeyboard(.interactively)
         .background(Theme.background.ignoresSafeArea())
+        .sheet(item: $legal) { LegalView(doc: $0) }
+    }
+
+    private var emailLooksValid: Bool {
+        let e = email.trimmingCharacters(in: .whitespaces)
+        guard let at = e.firstIndex(of: "@"), at != e.startIndex else { return false }
+        let domain = e[e.index(after: at)...]
+        return domain.contains(".") && !domain.hasSuffix(".") && !domain.hasPrefix(".")
+    }
+
+    private func requirement(_ text: String, ok: Bool, touched: Bool) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: ok ? "checkmark.circle.fill" : (touched ? "xmark.circle.fill" : "circle"))
+                .foregroundStyle(ok ? Theme.primary : (touched ? Theme.destructive : Theme.mutedForeground))
+            Text(text)
+                .foregroundStyle(ok ? Theme.foreground : Theme.mutedForeground)
+        }
+        .font(.system(size: 12))
     }
 
     private func field<Content: View>(_ label: String, @ViewBuilder content: () -> Content) -> some View {
