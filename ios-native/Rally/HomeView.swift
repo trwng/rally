@@ -14,6 +14,9 @@ struct HomeView: View {
         filter == nil ? store.games : store.games.filter { $0.sport == filter }
     }
 
+    /// Games I'm in that are happening right now (store.upcoming lists active ones first).
+    private var activeGames: [Game] { store.upcoming.filter { $0.isActive } }
+
     private var todayLabel: String {
         let f = DateFormatter()
         f.dateFormat = "EEEE, MMM d"
@@ -35,7 +38,13 @@ struct HomeView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 16)
                     .padding(.top, 16)
-                    .padding(.bottom, 20)
+                    .padding(.bottom, activeGames.isEmpty ? 20 : 14)
+
+                    if let g = activeGames.first {
+                        PlayingNowBanner(game: g, extra: activeGames.count - 1)
+                            .padding(.horizontal, 16)
+                            .padding(.bottom, 20)
+                    }
 
                     statsStrip
 
@@ -78,6 +87,7 @@ struct HomeView: View {
             .refreshable { await store.refresh() }
             .toolbar(.hidden, for: .navigationBar)
             .sheet(isPresented: $showPlaces) { NearbyPlacesView() }
+            .navigationDestination(for: ChatRoute.self) { ChatView(key: $0.key) }
         }
     }
 
@@ -125,5 +135,58 @@ struct HomeView: View {
                 GameCardView(game: g).padding(.horizontal, -16)
             }
         }
+    }
+}
+
+
+/// Slim green strip shown on Home while you're in a live game. Tapping opens the game chat.
+struct PlayingNowBanner: View {
+    let game: Game
+    var extra: Int = 0
+    @State private var pulse = false
+
+    var body: some View {
+        NavigationLink(value: ChatRoute(key: "g:\(game.id)")) {
+            HStack(spacing: 10) {
+                Circle()
+                    .fill(Theme.primaryForeground)
+                    .frame(width: 8, height: 8)
+                    .padding(4)
+                    .background(Theme.primaryForeground.opacity(pulse ? 0.15 : 0.35), in: Circle())
+                    .onAppear {
+                        withAnimation(.easeInOut(duration: 1.1).repeatForever(autoreverses: true)) { pulse = true }
+                    }
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(extra > 0 ? "Playing now · +\(extra) more" : "Playing now")
+                        .font(.system(size: 11, weight: .bold))
+                        .tracking(1.2)
+                        .textCase(.uppercase)
+                        .opacity(0.85)
+                    TimelineView(.periodic(from: .now, by: 30)) { _ in
+                        Text("\(sport(for: game.sport).name) · \(timeText)")
+                            .font(.system(size: 15, weight: .heavy))
+                            .lineLimit(1)
+                    }
+                }
+                Spacer(minLength: 8)
+                Text("Open")
+                    .font(.system(size: 12.5, weight: .bold))
+                    .padding(.horizontal, 10).padding(.vertical, 6)
+                    .background(Theme.primaryForeground.opacity(0.2), in: RoundedRectangle(cornerRadius: 5))
+            }
+            .foregroundStyle(Theme.primaryForeground)
+            .padding(.horizontal, 12).padding(.vertical, 10)
+            .background(Theme.primary, in: RoundedRectangle(cornerRadius: Theme.radius))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var timeText: String {
+        guard let start = game.startDate else { return game.location }
+        let mins = Int(Date().timeIntervalSince(start) / 60)
+        if mins < 0 { return "starts in \(-mins) min" }
+        if mins < 1 { return "just started" }
+        if mins < 60 { return "\(mins) min in" }
+        return "\(mins / 60)h \(mins % 60)m in"
     }
 }
