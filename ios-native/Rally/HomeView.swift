@@ -156,13 +156,13 @@ struct PlayingNowBanner: View {
                     .onAppear {
                         withAnimation(.easeInOut(duration: 1.1).repeatForever(autoreverses: true)) { pulse = true }
                     }
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(extra > 0 ? "Playing now · +\(extra) more" : "Playing now")
-                        .font(.system(size: 11, weight: .bold))
-                        .tracking(1.2)
-                        .textCase(.uppercase)
-                        .opacity(0.85)
-                    TimelineView(.periodic(from: .now, by: 30)) { _ in
+                TimelineView(.periodic(from: .now, by: 15)) { _ in
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(headline)
+                            .font(.system(size: 11, weight: .bold))
+                            .tracking(1.2)
+                            .textCase(.uppercase)
+                            .opacity(0.85)
                         Text("\(sport(for: game.sport).name) · \(timeText)")
                             .font(.system(size: 15, weight: .heavy))
                             .lineLimit(1)
@@ -179,6 +179,14 @@ struct PlayingNowBanner: View {
             .background(Theme.primary, in: RoundedRectangle(cornerRadius: Theme.radius))
         }
         .buttonStyle(.plain)
+    }
+
+    /// "Starting soon" until the start time, then "Playing now".
+    private var hasStarted: Bool { (game.startDate ?? .distantPast) <= Date() }
+
+    private var headline: String {
+        let base = hasStarted ? "Playing now" : "Starting soon"
+        return extra > 0 ? "\(base) · +\(extra) more" : base
     }
 
     private var timeText: String {
