@@ -30,10 +30,10 @@ export function OnboardingWizard() {
   const [submitting, setSubmitting] = useState(false);
 
   const age = dob ? ageFromDob(dob) : null;
-  const dobOk = age != null && age >= 15 && age <= 100;
+  const dobOk = age != null && age >= 18 && age <= 100;
   const ageError =
-    age != null && age < 15
-      ? "You must be at least 15 to use Rally."
+    age != null && age < 18
+      ? "You must be at least 18 to use Rally."
       : age != null && age > 100
         ? "Please check your date of birth."
         : null;
@@ -84,7 +84,7 @@ export function OnboardingWizard() {
             When were you born?
           </h1>
           <p className="mt-1.5 text-[14px] text-muted-foreground">
-            We use your age to keep the community safe. You must be 15+ to join.
+            We use your age to keep the community safe. You must be 18+ to join.
           </p>
           <div className="mt-8">
             <Label className="text-[12px] font-semibold">Date of birth</Label>
@@ -103,11 +103,7 @@ export function OnboardingWizard() {
             {age != null && dobOk && (
               <p className="mt-2 text-[13px] text-muted-foreground">
                 You're <span className="font-bold text-foreground">{age}</span>{" "}
-                — you'll play in the{" "}
-                <span className="font-bold text-foreground">
-                  {age < 18 ? "15–17 (teen)" : "18+ (adult)"}
-                </span>{" "}
-                community.
+                — welcome to Rally.
               </p>
             )}
           </div>

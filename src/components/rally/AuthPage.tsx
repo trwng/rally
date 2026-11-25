@@ -162,7 +162,7 @@ export function AuthPage() {
                 className="mt-0.5 h-4 w-4 accent-primary shrink-0"
               />
               <span>
-                I'm 15 or older and I agree to Rally's{" "}
+                I'm 18 or older and I agree to Rally's{" "}
                 <button
                   type="button"
                   onClick={() => setLegal("terms")}

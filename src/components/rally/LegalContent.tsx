@@ -11,7 +11,7 @@ export function TermsContent() {
 
       <h3 className="font-bold text-[14px] mt-2">1. What Rally is</h3>
       <p>
-        Rally is a platform that helps adults and teens (15+) find people to
+        Rally is a platform that helps adults (18+) find people to
         play pickup sports with. Rally does not organize, run, supervise,
         officiate, or sponsor any game, meetup, or activity arranged through
         the app.
@@ -32,10 +32,10 @@ export function TermsContent() {
         feel unsafe.
       </p>
 
-      <h3 className="font-bold text-[14px] mt-2">3. Eligibility &amp; age separation</h3>
+      <h3 className="font-bold text-[14px] mt-2">3. Eligibility</h3>
       <p>
-        You must be at least 15 years old. Users 15–17 are placed in a separate
-        pool from users 18+. You may only interact with users in your own pool.
+        You must be at least 18 years old to create an account or use Rally. If
+        we learn that someone under 18 has an account, we will delete it.
       </p>
 
       <h3 className="font-bold text-[14px] mt-2">4. Your conduct — zero tolerance</h3>
@@ -106,7 +106,7 @@ export function PrivacyContent() {
 
       <h3 className="font-bold text-[14px] mt-2">What we collect</h3>
       <ul className="list-disc pl-5 space-y-1">
-        <li>Account info: name, email, date of birth (used to determine your age pool).</li>
+        <li>Account info: name, email, date of birth (used to verify you are 18 or older).</li>
         <li>Profile info you add: sports, skill levels, city, and any optional contact info (phone, IG, Snap) you save.</li>
         <li>Location: the city and approximate coordinates you set in your profile, used to show nearby games on the map.</li>
         <li>Content you post: games, messages, and group activity.</li>
@@ -114,7 +114,7 @@ export function PrivacyContent() {
 
       <h3 className="font-bold text-[14px] mt-2">How we use it</h3>
       <ul className="list-disc pl-5 space-y-1">
-        <li>To match you with users and games in your own age pool.</li>
+        <li>To match you with users and games near you.</li>
         <li>To show relevant games near you.</li>
         <li>To enable chat and groups.</li>
         <li>To keep the platform safe.</li>
@@ -127,11 +127,10 @@ export function PrivacyContent() {
         shared with another user when you explicitly send them in a chat.
       </p>
 
-      <h3 className="font-bold text-[14px] mt-2">Age pools</h3>
+      <h3 className="font-bold text-[14px] mt-2">Age requirement</h3>
       <p>
-        Users under 18 and users 18+ are stored in fully separated pools
-        enforced at the database level. Data from one pool is never returned to
-        users in the other pool.
+        Rally is for adults 18 and older. We do not knowingly collect
+        information from anyone under 18.
       </p>
 
       <h3 className="font-bold text-[14px] mt-2">Third parties</h3>
