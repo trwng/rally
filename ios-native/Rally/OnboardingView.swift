@@ -12,7 +12,7 @@ struct OnboardingView: View {
     @State private var errorText: String?
 
     private var age: Int { Calendar.current.dateComponents([.year], from: dob, to: Date()).year ?? 0 }
-    private var dobOK: Bool { age >= 15 && age <= 100 }
+    private var dobOK: Bool { age >= 18 && age <= 100 }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -65,19 +65,19 @@ struct OnboardingView: View {
     private var dobStep: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("When's your birthday?").font(.system(size: 26, weight: .black))
-            Text("We use your age to keep the community safe. You must be 15+ to join.")
+            Text("We use your age to keep the community safe. You must be 18+ to join.")
                 .font(.system(size: 14)).foregroundStyle(Theme.mutedForeground)
             DatePicker("Date of birth", selection: $dob,
                        in: (Calendar.current.date(byAdding: .year, value: -100, to: Date()) ?? Date())...Date(),
                        displayedComponents: .date)
                 .datePickerStyle(.wheel)
                 .labelsHidden()
-            if age < 15 {
-                Text("You must be at least 15 to use Rally.").font(.system(size: 13, weight: .medium)).foregroundStyle(Theme.destructive)
+            if age < 18 {
+                Text("You must be at least 18 to use Rally.").font(.system(size: 13, weight: .medium)).foregroundStyle(Theme.destructive)
             } else if age > 100 {
                 Text("Please check your date of birth.").font(.system(size: 13, weight: .medium)).foregroundStyle(Theme.destructive)
             } else {
-                Text("You're \(age) — you'll play with \(age < 18 ? "15–17 (teen)" : "18+ (adult)") players.")
+                Text("You're \(age) — welcome to Rally.")
                     .font(.system(size: 13)).foregroundStyle(Theme.mutedForeground)
             }
         }

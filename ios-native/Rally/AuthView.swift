@@ -95,7 +95,7 @@ struct AuthView: View {
                             HStack(alignment: .top, spacing: 8) {
                                 Image(systemName: agreed ? "checkmark.square.fill" : "square")
                                     .foregroundStyle(agreed ? Theme.primary : Theme.mutedForeground)
-                                Text("I'm 15 or older and I agree to Rally's Terms & Conditions and Privacy Policy. I understand games are organized between users at their own risk and Rally is not responsible for in-person meetups.")
+                                Text("I'm 18 or older and I agree to Rally's Terms & Conditions and Privacy Policy. I understand games are organized between users at their own risk and Rally is not responsible for in-person meetups.")
                                     .font(.system(size: 12))
                                     .foregroundStyle(Theme.mutedForeground)
                                     .multilineTextAlignment(.leading)
