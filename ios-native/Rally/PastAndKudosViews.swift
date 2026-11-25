@@ -4,6 +4,7 @@ struct PastGamesView: View {
     @EnvironmentObject var store: Store
     var limit: Int? = nil
     @State private var kudosGame: Game?
+    @State private var shareGame: Game?
 
     var body: some View {
         let all = store.pastGames
@@ -25,6 +26,7 @@ struct PastGamesView: View {
             }
         }
         .sheet(item: $kudosGame) { KudosView(game: $0) }
+        .sheet(item: $shareGame) { ShareGameSheet(game: $0) }
     }
 
     private func article(_ g: Game) -> some View {
@@ -68,17 +70,33 @@ struct PastGamesView: View {
                         .buttonStyle(.plain)
                     }
                 }
-                Button { kudosGame = g } label: {
-                    Label("Give kudos", systemImage: "rosette").font(.system(size: 12, weight: .semibold))
-                        .padding(.horizontal, 12).frame(height: 32)
-                        .background(Theme.surface)
-                        .overlay(RoundedRectangle(cornerRadius: Theme.radius).stroke(Theme.border, lineWidth: 1))
-                        .clipShape(RoundedRectangle(cornerRadius: Theme.radius))
+                HStack(spacing: 8) {
+                    Button { kudosGame = g } label: {
+                        Label("Give kudos", systemImage: "rosette").font(.system(size: 12, weight: .semibold))
+                            .padding(.horizontal, 12).frame(height: 32)
+                            .background(Theme.surface)
+                            .overlay(RoundedRectangle(cornerRadius: Theme.radius).stroke(Theme.border, lineWidth: 1))
+                            .clipShape(RoundedRectangle(cornerRadius: Theme.radius))
+                    }
+                    .buttonStyle(.plain)
+                    shareButton(g)
                 }
-                .buttonStyle(.plain)
+            } else {
+                shareButton(g)
             }
         }
         .padding(16)
+    }
+
+    private func shareButton(_ g: Game) -> some View {
+        Button { shareGame = g } label: {
+            Label("Share", systemImage: "square.and.arrow.up").font(.system(size: 12, weight: .semibold))
+                .padding(.horizontal, 12).frame(height: 32)
+                .background(Theme.surface)
+                .overlay(RoundedRectangle(cornerRadius: Theme.radius).stroke(Theme.border, lineWidth: 1))
+                .clipShape(RoundedRectangle(cornerRadius: Theme.radius))
+        }
+        .buttonStyle(.plain)
     }
 }
 

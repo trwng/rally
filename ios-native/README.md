@@ -17,3 +17,7 @@ Xcode's `Rally` folder is synced with the folder on disk, so just copy the files
 4. Click the project → target **Rally** → General: set **Minimum Deployments** to iOS 17.0.
 5. Build Settings → search "Default Actor Isolation" → set to **nonisolated** (if the setting exists). Search "Swift Language Version" → **Swift 5**.
 6. Signing & Capabilities → pick your Team, choose your iPhone, press Run (⌘R).
+
+## Share cards (Past games → Share)
+Run `supabase/migrations/20261124000000_games_duration.sql` in the Supabase SQL editor so new games can store how long they last. Without it the app still works, but cards show the date instead of "time played".
+Optional: put your free Meta developer App ID in `Config.metaAppID` so Instagram Stories credit shares from Rally.

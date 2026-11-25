@@ -178,11 +178,11 @@ final class Store: ObservableObject {
         try await reloadGames()
     }
 
-    func createGame(sportKey: String, skill: String, spots: Int, when: Date, location: String, notes: String, groupId: String? = nil, lat: Double? = nil, lng: Double? = nil) async throws {
+    func createGame(sportKey: String, skill: String, spots: Int, when: Date, location: String, notes: String, groupId: String? = nil, lat: Double? = nil, lng: Double? = nil, durationMinutes: Int? = nil) async throws {
         guard let uid = userId, let me = profile else { return }
         let f = DateFormatter()
         f.dateFormat = "EEE, MMM d · h:mm a"
-        let row = NewGameRow(
+        var row = NewGameRow(
             pool: me.pool ?? "adult",
             sport: sportKey,
             host_user_id: uid,
@@ -196,9 +196,18 @@ final class Store: ObservableObject {
             spots_total: spots,
             skill: skill,
             notes: notes.isEmpty ? nil : notes,
-            group_id: groupId
+            group_id: groupId,
+            duration_minutes: durationMinutes
         )
-        let gameId = try await api.insertReturningId("games", body: row)
+        let gameId: String
+        do {
+            gameId = try await api.insertReturningId("games", body: row)
+        } catch {
+            // If the duration column hasn't been added to the database yet, save the game without it.
+            guard durationMinutes != nil, "\(error)".contains("duration_minutes") else { throw error }
+            row.duration_minutes = nil
+            gameId = try await api.insertReturningId("games", body: row)
+        }
 
         // Every game gets a group-chat thread (used by the Chats tab).
         struct Thread: Encodable {

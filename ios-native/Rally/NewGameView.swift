@@ -7,6 +7,7 @@ struct NewGameView: View {
     @State private var sportKey = "volleyball"
     @State private var skill = "Intermediate"
     @State private var spots = 6
+    @State private var duration = 90
     @State private var when = Date().addingTimeInterval(3600 * 3)
     @State private var location = ""
     @State private var place: PlaceResult?
@@ -28,6 +29,11 @@ struct NewGameView: View {
                 }
                 Section("When & where") {
                     DatePicker("Starts", selection: $when, in: Date()...)
+                    Picker("Length", selection: $duration) {
+                        ForEach([30, 45, 60, 90, 120, 150, 180], id: \.self) { m in
+                            Text(m < 60 ? "\(m) min" : (m % 60 == 0 ? "\(m / 60) hr" : "\(m / 60) hr \(m % 60) min")).tag(m)
+                        }
+                    }
                     PlaceField(placeholder: "Location (e.g. Piedmont Park courts)", text: $location, selected: $place,
                                near: store.profile.flatMap { p in p.lat.flatMap { a in p.lng.map { (a, $0) } } })
                 }
@@ -73,7 +79,8 @@ struct NewGameView: View {
                 sportKey: sportKey, skill: skill, spots: spots, when: when,
                 location: location.trimmingCharacters(in: .whitespaces), notes: notes,
                 groupId: groupId.isEmpty ? nil : groupId,
-                lat: place?.lat, lng: place?.lng
+                lat: place?.lat, lng: place?.lng,
+                durationMinutes: duration
             )
             dismiss()
         } catch {

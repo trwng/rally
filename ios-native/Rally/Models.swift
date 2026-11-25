@@ -45,6 +45,7 @@ struct Game: Codable, Identifiable, Hashable {
     var isPast: Bool?
     var createdAt: String?
     var groupId: String?
+    var durationMinutes: Int?
 
     var spotsLeft: Int { spotsTotal - spotsTaken }
     var isFull: Bool { spotsLeft <= 0 }
@@ -88,6 +89,7 @@ struct NewGameRow: Encodable {
     var notes: String?
     var is_past: Bool = false
     var group_id: String?
+    var duration_minutes: Int?
 }
 
 struct IdRow: Decodable { let id: String }
