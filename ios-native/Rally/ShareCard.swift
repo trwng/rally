@@ -54,7 +54,7 @@ extension Store {
             sportName: s.name,
             emoji: s.emoji,
             dateText: g.startDate.map { f.string(from: $0) } ?? g.whenLabel,
-            durationText: g.durationMinutes.map(formatDuration),
+            durationText: g.playedMinutes.map(formatDuration),
             players: ids.count,
             people: people,
             showPeople: showPeople

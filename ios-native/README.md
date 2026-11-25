@@ -19,5 +19,6 @@ Xcode's `Rally` folder is synced with the folder on disk, so just copy the files
 6. Signing & Capabilities → pick your Team, choose your iPhone, press Run (⌘R).
 
 ## Share cards (Past games → Share)
-Run `supabase/migrations/20261124000000_games_duration.sql` in the Supabase SQL editor so new games can store how long they last. Without it the app still works, but cards show the date instead of "time played".
+Run `supabase/migrations/20261124000000_games_ended_at.sql` in the Supabase SQL editor so the app can record when a host ends a game. Without it the app still works, but share cards show the date instead of "time played".
+A game stays live (green "Playing now" banner) until the host taps End game. If a host forgets, it closes itself 12 hours after it started.
 Optional: put your free Meta developer App ID in `Config.metaAppID` so Instagram Stories credit shares from Rally.

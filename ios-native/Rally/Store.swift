@@ -173,16 +173,24 @@ final class Store: ObservableObject {
     }
 
     func end(_ g: Game) async throws {
-        struct Patch: Encodable { let is_past: Bool }
-        try await api.update("games", query: [URLQueryItem(name: "id", value: "eq.\(g.id)")], body: Patch(is_past: true))
+        struct Patch: Encodable { let is_past: Bool; let ended_at: String }
+        struct Plain: Encodable { let is_past: Bool }
+        let q = [URLQueryItem(name: "id", value: "eq.\(g.id)")]
+        do {
+            try await api.update("games", query: q, body: Patch(is_past: true, ended_at: isoString(Date())))
+        } catch {
+            // If the ended_at column isn't in the database yet, just mark the game as finished.
+            guard "\(error)".contains("ended_at") else { throw error }
+            try await api.update("games", query: q, body: Plain(is_past: true))
+        }
         try await reloadGames()
     }
 
-    func createGame(sportKey: String, skill: String, spots: Int, when: Date, location: String, notes: String, groupId: String? = nil, lat: Double? = nil, lng: Double? = nil, durationMinutes: Int? = nil) async throws {
+    func createGame(sportKey: String, skill: String, spots: Int, when: Date, location: String, notes: String, groupId: String? = nil, lat: Double? = nil, lng: Double? = nil) async throws {
         guard let uid = userId, let me = profile else { return }
         let f = DateFormatter()
         f.dateFormat = "EEE, MMM d · h:mm a"
-        var row = NewGameRow(
+        let row = NewGameRow(
             pool: me.pool ?? "adult",
             sport: sportKey,
             host_user_id: uid,
@@ -196,18 +204,9 @@ final class Store: ObservableObject {
             spots_total: spots,
             skill: skill,
             notes: notes.isEmpty ? nil : notes,
-            group_id: groupId,
-            duration_minutes: durationMinutes
+            group_id: groupId
         )
-        let gameId: String
-        do {
-            gameId = try await api.insertReturningId("games", body: row)
-        } catch {
-            // If the duration column hasn't been added to the database yet, save the game without it.
-            guard durationMinutes != nil, "\(error)".contains("duration_minutes") else { throw error }
-            row.duration_minutes = nil
-            gameId = try await api.insertReturningId("games", body: row)
-        }
+        let gameId = try await api.insertReturningId("games", body: row)
 
         // Every game gets a group-chat thread (used by the Chats tab).
         struct Thread: Encodable {

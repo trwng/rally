@@ -45,24 +45,31 @@ struct Game: Codable, Identifiable, Hashable {
     var isPast: Bool?
     var createdAt: String?
     var groupId: String?
-    var durationMinutes: Int?
+    var endedAt: String?
 
     var spotsLeft: Int { spotsTotal - spotsTaken }
     var isFull: Bool { spotsLeft <= 0 }
     var startDate: Date? { whenAt.flatMap(parseISODate) }
 
-    /// A game is past once the host ended it or its start time has gone by.
+    /// A game stays live until the person who made it ends it. As a safety net, one that was
+    /// never ended closes itself 12 hours after it started.
     var isOver: Bool {
         if isPast == true { return true }
-        if let d = startDate { return d < Date() }
+        if let d = startDate { return Date() > d.addingTimeInterval(12 * 3600) }
         return false
     }
 
-    /// Active from 15 minutes before start until 3 hours after.
+    /// Live from 15 minutes before the start until the host ends it.
     var isActive: Bool {
-        guard let d = startDate else { return false }
-        let now = Date()
-        return now >= d.addingTimeInterval(-15 * 60) && now <= d.addingTimeInterval(3 * 3600)
+        guard !isOver, let d = startDate else { return false }
+        return Date() >= d.addingTimeInterval(-15 * 60)
+    }
+
+    /// Minutes between the start time and when the host ended it (nil if unknown).
+    var playedMinutes: Int? {
+        guard let start = startDate, let e = endedAt.flatMap(parseISODate) else { return nil }
+        let m = Int(e.timeIntervalSince(start) / 60)
+        return (m >= 1 && m <= 24 * 60) ? m : nil
     }
 }
 
@@ -89,7 +96,6 @@ struct NewGameRow: Encodable {
     var notes: String?
     var is_past: Bool = false
     var group_id: String?
-    var duration_minutes: Int?
 }
 
 struct IdRow: Decodable { let id: String }
