@@ -48,14 +48,6 @@ struct HomeView: View {
 
                     statsStrip
 
-                    section("Your games") {
-                        if store.upcoming.isEmpty {
-                            EmptyNote(text: "You haven't joined any games yet.")
-                        } else {
-                            gameList(store.upcoming)
-                        }
-                    }
-
                     section("Near you") {
                         Button { showPlaces = true } label: {
                             Label("Find courts & parks nearby", systemImage: "location.magnifyingglass")
